@@ -1,0 +1,46 @@
+---
+title: "sales"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lubridate)
+```
+```{r}
+sales <- read_csv("sales.csv")
+glimpse(sales)
+total_revenue <- sum(sales$Revenue, na.rm = TRUE)
+total_units <- sum(sales$`Units Sold`, na.rm = TRUE)
+
+cat("**Total Revenue:** $", formatC(total_revenue, format = "f", big.mark = ",", digits = 2), "\n")
+cat("**Total Units Sold:**", total_units, "\n")
+sales %>%
+  group_by(Product) %>%
+  summarise(
+    Total_Revenue = sum(Revenue, na.rm = TRUE),
+    Total_Units = sum(`Units Sold`, na.rm = TRUE)
+  ) %>%
+  arrange(desc(Total_Revenue)) %>%
+  knitr::kable()
+sales %>%
+  group_by(Quarter) %>%
+  summarise(Quarterly_Revenue = sum(Revenue, na.rm = TRUE)) %>%
+  ggplot(aes(x = Quarter, y = Quarterly_Revenue, fill = Quarter)) +
+  geom_col() +
+  labs(title = "Revenue by Quarter", y = "Revenue ($)", x = "Quarter") +
+  theme_minimal()
+sales %>%
+  group_by(Product) %>%
+  summarise(
+    Avg_Units = mean(`Units Sold`),
+    Avg_Revenue = mean(Revenue)
+  ) %>%
+  arrange(desc(Avg_Revenue)) %>%
+  knitr::kable()
+correlation <- cor(sales$`Units Sold`, sales$Revenue, use = "complete.obs")
+cat("Correlation between Units Sold and Revenue: ", round(correlation, 2))
+model <- lm(Revenue ~ `Units Sold` + Quarter + Product, data = sales)
+summary(model)
+```
